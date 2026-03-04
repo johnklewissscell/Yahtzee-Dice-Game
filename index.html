@@ -5,13 +5,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Yahtzee Dice Game | Gameplay</title>
-    <link rel="icon" href="dice-logo.png">
+    <link rel="icon" href="./images/dice-logo.png">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <div id="banner">
-        <img src="dice-logo.png" alt="Dice Logo" id="logo">
+        <img src="./images/dice-logo.png" alt="Dice Logo" id="logo">
         <h1 id="heading">Yahtzee Online</h1>
         <div id="stats">
             <div class="separator"></div>
@@ -24,29 +24,30 @@
         </div>
     </div>
     <div id="keeper-dice">
-        <div class="diceOne"></div>
-        <div class="diceTwo"></div>
-        <div class="diceThree"></div>
-        <div class="diceFour"></div>
-        <div class="diceFive"></div>
+        <div class="diceOne keepDice dice"></div>
+        <div class="diceTwo keepDice dice"></div>
+        <div class="diceThree keepDice dice"></div>
+        <div class="diceFour keepDice dice"></div>
+        <div class="diceFive keepDice dice"></div>
     </div>
     <div id="counter">
-        <h2>Rolls Left <span id="roll-count"></span></h2>
+        <h2>Rolls Left</h2>
+        <span id="roll-count">3</span>
     </div>
     <div id="mid-section">
         <div id="playspace">
-            <div class="diceOne"></div>
-            <div class="diceTwo"></div>
-            <div class="diceThree"></div>
-            <div class="diceFour"></div>
-            <div class="diceFive"></div>
+            <div id="playOne" class="diceOne playdice dice"></div>
+            <div id="playTwo" class="diceTwo playdice dice"></div>
+            <div id="playThree" class="diceThree playdice dice"></div>
+            <div id="playFour" class="diceFour playdice dice"></div>
+            <div id="playFive" class="diceFive playdice dice"></div>
         </div>
         <div id="unset-dice">
-            <div class="diceOne"></div>
-            <div class="diceTwo"></div>
-            <div class="diceThree"></div>
-            <div class="diceFour"></div>
-            <div class="diceFive"></div>
+            <div class="diceOne dice"><img alt="1" src="./images/dice-six-faces-one.png"></div>
+            <div class="diceTwo dice"><img alt="2" src="./images/dice-six-faces-two.png"></div>
+            <div class="diceThree dice"><img alt="3" src="./images/dice-six-faces-three.png"></div>
+            <div class="diceFour dice"><img alt="4" src="./images/dice-six-faces-four.png"></div>
+            <div class="diceFive dice"><img alt="5" src="./images/dice-six-faces-five.png"></div>
         </div>
         <div id="roll-btn">
             <button id="roll-button">Roll Dice</button>

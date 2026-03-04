@@ -74,10 +74,12 @@ body {
     left: 50%;
     width: 29.65%;
     font-weight: bold;
+    transition: all 0.3s ease-in-out;
 }
 
 #roll-button:hover {
     background-color: #888888;
+    transform: scale(1.05);
 }
 
 .deep {
@@ -108,17 +110,6 @@ td, th {
     padding: 10px;
 }
 
-#counter {
-    display: flex;
-    align-items: center;
-    font-size: 20px;
-    color: #ffffff;
-    position: absolute;
-    top: 70%;
-    left: 35%;
-    text-decoration: underline;
-}
-
 #keeper-dice {
     display: flex;
     justify-content: center;
@@ -141,7 +132,6 @@ td, th {
     width: 4vw;
     height: 8vh;
     background-color: none;
-    border: 2px solid black;
     margin: 10px;
     display: flex;
     justify-content: center;
@@ -155,11 +145,9 @@ td, th {
     height: 32.5vh;
     background-color: rgba(255, 255, 255, 0.8);
     border: 7px ridge black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     border-radius: 10px;
     position: absolute;
+    overflow: hidden;
     left: 33.5%;
     top: 21.95%;
 }
@@ -179,4 +167,147 @@ td, th {
     align-items: center;  
     padding-left: 10px;
     border-radius: 10px;
+}
+
+.dice {
+    width: 4vw;
+    height: 8vh;
+    background-color: none;
+    border-radius: 10px;
+    margin: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    border-radius: 10px;
+}
+
+.dice img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+#unset-dice {
+    width: 45.5%;
+    height: 32.5vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    position: absolute;
+    left: 34%;
+    top: 47%;
+}
+
+#unset-dice div {
+    width: 5vw;
+    height: 9vh;
+    border-radius: 15px;
+}
+
+#roll-count {
+    font-size: 100px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+#counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 20px;
+    color: #ffffff;
+    position: absolute;
+    top: 70%;
+    left: 35%;
+}
+
+.playdice {
+    transition: all 0.3s ease-in-out;
+    position: absolute;
+    width: 4vw;
+    height: 8vh;
+}
+
+.playdice:nth-child(1) { top: 20px; left: 20px; }
+.playdice:nth-child(2) { top: 60px; left: 120px; }
+.playdice:nth-child(3) { top: 100px; left: 60px; }
+.playdice:nth-child(4) { top: 40px; left: 200px; }
+.playdice:nth-child(5) { top: 140px; left: 160px; }
+
+.playdice:hover {
+    cursor: pointer;
+    transform: scale(1.1);
+}
+
+.keepDice {
+    transition: all 0.3s ease-in-out;
+}
+
+/* KeyFrames */
+
+@keyframes floatDice {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+    100% { transform: translateY(0px); }
+}
+
+@keyframes softGlow {
+    0% { box-shadow: 0 0 5px rgba(255,255,255,0.2); }
+    50% { box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+    100% { box-shadow: 0 0 5px rgba(255,255,255,0.2); }
+}
+
+@keyframes rollBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+@keyframes fadeSlideUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+#heading {
+    animation: fadeSlideUp 0.8s ease forwards;
+}
+
+#banner, 
+#upper-table, 
+#lower-table, 
+#playspace, 
+#keeper-dice {
+    animation: fadeSlideUp 0.7s ease forwards;
+}
+
+.dice:hover {
+    animation: floatDice 2.5s ease-in-out;
+}
+
+.playdice:active {
+    animation: rollBounce 0.3s ease;
+}
+
+#roll-button {
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+#roll-button:hover {
+    box-shadow: 0 0 12px rgba(255,255,255,0.4);
+}
+
+#final-score {
+    animation: softGlow 6s infinite ease-in-out;
+}
+
+/* Responsive Design */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
 }
