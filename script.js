@@ -10,6 +10,41 @@ const diceArray = [diceOne, diceTwo, diceThree, diceFour, diceFive, diceSix];
 const rollButton = document.getElementById('roll-button');
 let totalTurns = 0;
 let yahtzeeBonus = 0;
+let startTime = null;
+let timerInterval = null;
+
+function formatElapsed(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2,'0')}`;
+}
+
+function startTimer() {
+    if (startTime !== null) return;
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        document.getElementById('time-count').textContent = formatElapsed(elapsed);
+    }, 500);
+}
+
+let gameCount;
+const stored = sessionStorage.getItem('nextGameCount');
+if (stored) {
+    gameCount = parseInt(stored, 10) || 1;
+    sessionStorage.removeItem('nextGameCount');
+} else {
+    gameCount = 1;
+}
+document.getElementById('game-count').textContent = gameCount;
+
+const newGameButton = document.getElementById('new-game-button');
+newGameButton.addEventListener('click', () => {
+    const next = gameCount + 1;
+    sessionStorage.setItem('nextGameCount', next);
+    location.reload();
+});
 
 rollButton.addEventListener('click', () => {
     const playDice = [
@@ -21,12 +56,22 @@ rollButton.addEventListener('click', () => {
     ];
 
     const activeDice = playDice.filter(die => die.style.display !== 'none');
+    const keeperDice = Array.from(document.querySelectorAll('.keepDice')).filter(d => d.innerHTML.trim());
+
+    if (activeDice.length === 0 && keeperDice.length === 5) {
+        alert('move dice into playspace to roll them again');
+        return;
+    }
+
+    // start elapsed timer when first roll happens
+    startTimer();
 
     activeDice.forEach(die => {
         const roll = Math.floor(Math.random() * 6);
         die.innerHTML = diceArray[roll];
         die.style.display = 'block';
     });
+    updatePlayCursor();
 
     document.getElementById('unset-dice').style.display = 'none';
 
@@ -77,9 +122,18 @@ document.querySelectorAll('.playdice').forEach(die => {
         die.innerHTML = '';
         die.style.display = 'none';
         updateKeeperCursor();
+        updatePlayCursor();
         calculatePotentialScores();
     });
 });
+
+function updatePlayCursor() {
+    document.querySelectorAll('.playdice').forEach(die => {
+        die.style.cursor = die.innerHTML.trim() ? 'pointer' : 'default';
+    });
+}
+
+updatePlayCursor();
 
 document.querySelectorAll('.keepDice').forEach(keeperDie => {
     keeperDie.style.cursor = 'default';
@@ -115,12 +169,20 @@ function calculatePotentialScores() {
         td.style.color = count ? 'red' : '';
     });
 
-    const upperScores = upperMapping.map(id => parseInt(document.getElementById(`${id}-score`).textContent) || 0);
-    const upperTotal = upperScores.reduce((a,b)=>a+b,0);
-    document.getElementById('upper-score').textContent = upperTotal;
-    const bonus = upperTotal >= 63 ? 35 : 0;
-    document.getElementById('bonus-score').textContent = bonus;
-    document.getElementById('total-upper-score').textContent = upperTotal + bonus;
+    const upperCells = upperMapping.map(id => document.getElementById(`${id}-score`));
+    const allUpperLocked = upperCells.every(td => td.dataset.locked === 'true');
+    if (allUpperLocked) {
+        const upperScores = upperCells.map(td => parseInt(td.textContent) || 0);
+        const upperTotal = upperScores.reduce((a,b)=>a+b,0);
+        document.getElementById('upper-score').textContent = upperTotal;
+        const bonus = upperTotal >= 63 ? 35 : 0;
+        document.getElementById('bonus-score').textContent = bonus;
+        document.getElementById('total-upper-score').textContent = upperTotal + bonus;
+    } else {
+        document.getElementById('upper-score').textContent = '';
+        document.getElementById('bonus-score').textContent = '';
+        document.getElementById('total-upper-score').textContent = '';
+    }
 
     const lowerScores = {
         'three-kind-score': sumIfKind(allDice, 3),
@@ -139,18 +201,34 @@ function calculatePotentialScores() {
         td.style.color = lowerScores[id] !== '' ? 'red' : '';
     });
 
-    const yahtzeeScore = document.getElementById('yahtzee-score').dataset.locked === 'true';
-    if (yahtzeeScore && allDice.length===5 && new Set(allDice).size===1) {
-        yahtzeeBonus += 100; 
+    const yahtzeeTd = document.getElementById('yahtzee-score');
+    const yahtzeeScoreLocked = yahtzeeTd.dataset.locked === 'true';
+    const yahtzeeScoreValue = parseInt(yahtzeeTd.textContent) || 0;
+    if (yahtzeeScoreLocked && yahtzeeScoreValue === 0) {
+        yahtzeeBonus = 0;
     }
-    document.getElementById('yahtzee-bonus-score').textContent = yahtzeeBonus;
+    if (yahtzeeScoreLocked && yahtzeeScoreValue === 50 && allDice.length === 5 && new Set(allDice).size === 1) {
+        yahtzeeBonus += 100;
+    }
+
+    let yahtzeeBonusDisplay = '';
+    if (yahtzeeScoreLocked && yahtzeeScoreValue === 0) {
+        yahtzeeBonusDisplay = '0';
+    } else if (yahtzeeBonus > 0) {
+        yahtzeeBonusDisplay = yahtzeeBonus;
+    }
+    document.getElementById('yahtzee-bonus-score').textContent = yahtzeeBonusDisplay;
 
     const lowerScoreCells = ['three-kind-score','four-kind-score','full-house-score','small-straight-score','large-straight-score','yahtzee-score','chance-score'];
-    const lowerTotal = lowerScoreCells.reduce((sum,id)=>{
-        const val = parseInt(document.getElementById(id).textContent) || 0;
+    const allLowerLocked = lowerScoreCells.every(id => document.getElementById(id).dataset.locked === 'true');
+    const lowerTotalValue = lowerScoreCells.reduce((sum,id)=>{
+        const td = document.getElementById(id);
+        const val = td.dataset.locked === 'true' ? parseInt(td.textContent) || 0 : 0;
         return sum + val;
     },0) + yahtzeeBonus;
-    document.getElementById('total-lower-score').textContent = lowerTotal;
+
+    const lowerTotalDisplay = allLowerLocked ? lowerTotalValue : '';
+    document.getElementById('total-lower-score').textContent = lowerTotalDisplay;
 }
 
 function sumIfKind(dice, countNeeded) {
@@ -185,30 +263,65 @@ function hasLargeStraight(dice) {
 }
 
 document.querySelectorAll('#upper-table td, #lower-table td').forEach(td => {
-    td.addEventListener('click', ()=>{
-        if(td.dataset.locked) return;
-        if(td.textContent==='') {
-            if(confirm('No dice for this category. Set to 0?')) td.textContent=0;
-            else return;
+    const skipIds = ['total-upper-score','total-lower-score','bonus-score','upper-score','yahtzee-bonus-score'];
+    if (skipIds.includes(td.id)) return;
+    td.addEventListener('click', ()=> {
+        if (td.dataset.locked) return
+        if (td.textContent === '') {
+            if (!confirm('No dice for this category. Set to 0?')) return
+            td.textContent = 0
         }
-        td.style.color='black';
-        td.dataset.locked='true';
+        td.style.color = 'black'
+        td.dataset.locked = 'true'
 
-        document.getElementById('roll-count').textContent=3;
-        rollButton.disabled=false;
-        document.querySelectorAll('.playdice, .keepDice').forEach(d=>{
-            d.innerHTML='';
-            d.style.display='block';
-        });
+        document.getElementById('unset-dice').style.display = 'flex';
 
-        totalTurns++;
-        calculatePotentialScores();
+        document.getElementById('roll-count').textContent = 3
+        rollButton.disabled = false
+        document.querySelectorAll('.playdice, .keepDice').forEach(d => {
+            d.innerHTML = ''
+            d.style.display = 'block'
+        })
+        rollButton.disabled = false;
 
-        if(totalTurns>=13){
-            rollButton.disabled=true;
-            const finalScore = parseInt(document.getElementById('total-upper-score').textContent) +
-                               parseInt(document.getElementById('total-lower-score').textContent);
-            document.getElementById('final-score-value').textContent = finalScore;
+        document.getElementById('roll-count').textContent = 3
+        rollButton.disabled = false
+        totalTurns++
+        calculatePotentialScores()
+        if (totalTurns >= 13) {
+            const upperText = document.getElementById('total-upper-score').textContent;
+            const lowerText = document.getElementById('total-lower-score').textContent;
+            if (upperText !== '' && lowerText !== '') {
+                rollButton.disabled = true
+                const upperTotal = parseInt(upperText) || 0
+                const lowerTotal = parseInt(lowerText) || 0
+                document.getElementById('final-score-value').textContent = upperTotal + lowerTotal
+                document.getElementById('new-game-button').style.display = 'block'
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            }
         }
-    });
+    })
 });
+
+document.querySelectorAll('#total-upper-score, #total-lower-score').forEach(td => {
+    td.addEventListener('click', () => {
+        alert('You cannot zero out the total scores');
+    })
+});
+
+const bonusTd = document.getElementById('bonus-score');
+if (bonusTd) {
+    bonusTd.addEventListener('click', () => {
+        alert('You cannot zero out the bonus score');
+    });
+}
+
+const upperTotalTd = document.getElementById('upper-score');
+if (upperTotalTd) {
+    upperTotalTd.addEventListener('click', () => {
+        alert('You cannot zero out the upper section score');
+    });
+}

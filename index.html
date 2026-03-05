@@ -19,7 +19,7 @@
             <div class="separator"></div>
             <h2>Player Name<span id="player-name"></span></h2>
             <div class="separator"></div>
-            <h2>Time<span id="time-count"></span></h2>
+            <h2>Time<span id="time-count">0:00</span></h2>
             <div class="separator"></div>
         </div>
     </div>
@@ -51,6 +51,7 @@
         </div>
         <div id="roll-btn">
             <button id="roll-button">Roll Dice</button>
+            <button id="new-game-button" style="display:none; margin-top:8px;">New Game</button>
         </div>
     </div>
     <div id="scorecard">
@@ -144,6 +145,9 @@
     </div>
     <div id="final-score">
         <h2>Final Score: <span id="final-score-value"></span></h2>
+    </div>
+    <div id="quit-game">
+        <button id="quit-button" onclick="window.location.href='lobby.html'">Quit Game</button>
     </div>
     <script src="script.js"></script>
 </body>

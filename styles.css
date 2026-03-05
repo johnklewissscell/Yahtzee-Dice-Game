@@ -82,6 +82,37 @@ body {
     transform: scale(1.05);
 }
 
+#game-count,
+#player-name,
+#time-count {
+    font-size: 50px;
+    color: orange;
+    margin-top: 0px;
+}
+
+#new-game-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+    border: 2px solid #388e3c;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    margin: 8px auto 0;
+    width: 29.65%;
+    font-weight: bold;
+    transition: all 0.3s ease-in-out;
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    border: 2px solid black;
+}
+
+#new-game-button:hover {
+    background-color: #43a047;
+}
+
 .deep {
     background-color: #aaa;
 }
@@ -150,6 +181,7 @@ td, th {
     overflow: hidden;
     left: 33.5%;
     top: 21.95%;
+    cursor: default;
 }
 
 #final-score {
@@ -187,6 +219,10 @@ td, th {
     height: 100%;
     object-fit: contain;
     border-radius: 10px;
+}
+
+td:hover {
+    cursor: default;
 }
 
 #unset-dice {
@@ -238,7 +274,6 @@ td, th {
 .playdice:nth-child(5) { top: 140px; left: 160px; }
 
 .playdice:hover {
-    cursor: pointer;
     transform: scale(1.1);
 }
 
@@ -246,7 +281,33 @@ td, th {
     transition: all 0.3s ease-in-out;
 }
 
-/* KeyFrames */
+#quit-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #f44336;
+    color: white;
+    border: 2px solid #d32f2f;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    margin: 8px auto 0;
+    width: 100%;
+    font-weight: bold;
+    transition: all 0.3s ease-in-out;
+    border: 2px solid black;
+}
+
+#quit-button:hover {
+    background-color: #e53935;
+    cursor: pointer;
+}
+
+#quit-game {
+    position: absolute;
+    top: 90%;
+    left: 82.8%;
+    width: 14.5vw;
+}
 
 @keyframes floatDice {
     0% { transform: translateY(0px); }
@@ -302,8 +363,6 @@ td, th {
 #final-score {
     animation: softGlow 6s infinite ease-in-out;
 }
-
-/* Responsive Design */
 
 @media (prefers-reduced-motion: reduce) {
     * {
