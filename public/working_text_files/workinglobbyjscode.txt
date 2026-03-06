@@ -43,20 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
         listenForGameStatus(currentGameCode);
     }
 
-    function quitGame() {
-    if (!currentGameCode) return window.location.href = "index.html";
-
-    if (isHost) {
-        const gameRef = ref(db, "games/" + currentGameCode);
-        set(gameRef, null);
-    } else {
-        const playerRef = ref(db, `games/${currentGameCode}/players/${playerName}`);
-        set(playerRef, null);
-    }
-
-    window.location.href = "index.html";
-}
-
     function updateWaitingRoom(players) {
         const waitingRoom = document.getElementById("waiting-room-players");
         waitingRoom.innerHTML = "";
@@ -139,18 +125,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("start-game-button")?.addEventListener("click", async () => {
-    if (!isHost) return;
-    const gameRef = ref(db, "games/" + currentGameCode);
-    await update(gameRef, { status: "started" });
-});
-
-    document.getElementById("quit-game-button")?.addEventListener("click", quitGame);
-    window.addEventListener("beforeunload", () => {
-    if (!isHost && currentGameCode) {
-        const playerRef = ref(db, `games/${currentGameCode}/players/${playerName}`);
-        set(playerRef, null);
-    }
-});
+        if (!isHost) return;
+        const gameRef = ref(db, "games/" + currentGameCode);
+        await update(gameRef, { status: "started" });
+    });
 
     function listenForPlayers(code) {
         const playersRef = ref(db, "games/" + code + "/players");
@@ -163,19 +141,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function listenForGameStatus(code) {
-    const gameRef = ref(db, "games/" + code);
-    onValue(gameRef, snapshot => {
-        if (!snapshot.exists()) {
-            window.location.href = "index.html";
-            return;
-        }
-        const gameData = snapshot.val();
+        const gameRef = ref(db, "games/" + code);
+        onValue(gameRef, snapshot => {
+            if (!snapshot.exists()) {
+                window.location.href = "index.html";
+                return;
+            }
+            const gameData = snapshot.val();
 
-        if (gameData.status === "started") {
-            sessionStorage.setItem("playerName", playerName || "Player1");
-            sessionStorage.setItem("gameCode", currentGameCode || "");
-            window.location.href = "play.html";
-        }
-    });
-}
+            if (gameData.status === "started") {
+                sessionStorage.setItem("playerName", playerName || "Player1");
+                sessionStorage.setItem("gameCode", currentGameCode || "");
+                window.location.href = "play.html";
+            }
+
+            if (gameData.status === "finished") {
+                set(ref(db, "games/" + code), null);
+                window.location.href = "index.html";
+            }
+        });
+    }
 });

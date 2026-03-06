@@ -1,20 +1,10 @@
-import { db } from "./api.js";
-import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-const gameCode = sessionStorage.getItem("gameCode");
-if (gameCode) {
-    const gameRef = ref(db, "games/" + gameCode);
-    onValue(gameRef, (snapshot) => {
-        if (!snapshot.exists()) window.location.href = "index.html";
-    });
-}
-
 const diceOne = '<img alt="1" src="images/dice-six-faces-one.png">';
 const diceTwo = '<img alt="2" src="images/dice-six-faces-two.png">';
 const diceThree = '<img alt="3" src="images/dice-six-faces-three.png">';
 const diceFour = '<img alt="4" src="images/dice-six-faces-four.png">';
 const diceFive = '<img alt="5" src="images/dice-six-faces-five.png">';
 const diceSix = '<img alt="6" src="images/dice-six-faces-six.png">';
+
 const diceArray = [diceOne, diceTwo, diceThree, diceFour, diceFive, diceSix];
 
 const rollButton = document.getElementById("roll-button");
@@ -24,6 +14,7 @@ let startTime = null;
 let timerInterval = null;
 
 let ws = null;
+let gameCode = null;
 let isMultiplayer = false;
 let playerScores = {};
 
@@ -55,28 +46,44 @@ document.getElementById("game-count").textContent = gameCount;
 
 function initMultiplayer() {
   const params = new URLSearchParams(window.location.search);
-  const paramCode = params.get("gameCode");
-  if (paramCode) {
+  gameCode = params.get("gameCode");
+
+  if (gameCode) {
     isMultiplayer = true;
-    ws = new WebSocket((window.location.protocol === "https:" ? "wss:" : "ws:") + "//" + window.location.host);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(`${protocol}//${window.location.host}`);
+
     ws.onopen = () => {
       const playerName = sessionStorage.getItem("playerName") || "Player";
-      ws.send(JSON.stringify({ type: "joinGame", gameCode: paramCode, playerName }));
+      ws.send(JSON.stringify({ type: "joinGame", gameCode: gameCode, playerName: playerName }));
     };
-    ws.onmessage = (event) => handleMultiplayerMessage(JSON.parse(event.data));
-    ws.onclose = () => window.location.href = "index.html";
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      handleMultiplayerMessage(message);
+    };
+
+    ws.onclose = () => {
+      window.location.href = "index.html";
+    };
   }
 }
 
 function handleMultiplayerMessage(message) {
   switch (message.type) {
     case "gameJoined":
-      if (message.allPlayers) message.allPlayers.forEach(p => { if (p.score) playerScores[p.name] = p.score; });
+      if (message.allPlayers) {
+        message.allPlayers.forEach((player) => {
+          if (player.score) playerScores[player.name] = player.score;
+        });
+      }
       break;
     case "playerScoreUpdate":
       playerScores[message.playerName] = message.score;
       const session = gameSessions.get(gameCode);
-      if (message.allPlayers && message.allPlayers.every(p => playerScores[p.name])) displayFinalScores(playerScores);
+      if (message.allPlayers && message.allPlayers.every((p) => playerScores[p.name])) {
+        displayFinalScores(playerScores);
+      }
       break;
     case "playerFinished":
       playerScores[message.playerName] = message.finalScore;
