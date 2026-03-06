@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Yahtzee Dice Game | Lobby</title>
-    <link rel="stylesheet" href="/public/lobby.css" />
+    <link rel="icon" href="images/dice-logo.png">
+    <link rel="stylesheet" href="lobby.css" />
   </head>
   <body>
     <header>
@@ -41,7 +42,8 @@
           </div>
           <div id="game-code">
             <h2>Game Code:</h2>
-            <input type="text" id="game-code-input" placeholder="Create game code (ie: 77AD3B)" />
+            <input type="text" id="game-code-input" disabled />
+            <button id="generate-code">Generate Game Code</button>
             <button id="join-game-button">Create Game</button>
           </div>
           <h1 id="or">OR</h1>
@@ -62,6 +64,6 @@
         </div>
       </div>
     </main>
-    <script src="/public/lobby.js"></script>
+    <script src="lobby.js"></script>
   </body>
 </html>
