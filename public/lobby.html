@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yahtzee Dice Game | Lobby</title>
+    <link rel="stylesheet" href="lobby.css" />
+  </head>
+  <body>
+    <header>
+      <div id="banner">
+        <div id="game-title">
+          <img src="./images/dice-logo.png" alt="Dice Logo" id="logo" />
+          <h2 id="heading">Yahtzee Online</h2>
+        </div>
+        <div class="separator"></div>
+        <div id="player-name">Player Name</div>
+        <div class="separator"></div>
+        <div id="games-played">
+          Games Played: <span id="game-count">0</span>
+        </div>
+      </div>
+    </header>
+    <main>
+      <div id="middle">
+        <div id="left">
+          <div id="enter-name">
+            <h2>Player Name: </h2>
+            <input type="text" id="name-input" placeholder="Enter your name" />
+            <button id="enter-name-button">Enter Name</button>
+          </div>
+          <div id="multiplayer">
+            <div id="oneP" class="mp">1P</div>
+            <div id="twoP" class="mp">2P</div>
+            <div id="threeP" class="mp">3P</div>
+            <div id="fourP" class="mp">4P</div>
+            <div id="fiveP" class="mp">5P</div>
+            <div id="sixP" class="mp">6P</div>
+            <div id="sevenP" class="mp">7P</div>
+            <div id="eightP" class="mp">8P</div>
+          </div>
+          <div id="game-code">
+            <h2>Game Code:</h2>
+            <input type="text" id="game-code-input" placeholder="Create game code (ie: 77AD3B)" />
+            <button id="join-game-button">Create Game</button>
+          </div>
+          <h1 id="or">OR</h1>
+          <div id="join-code">
+            <h2>Join Code:</h2>
+            <input type="text" id="join-code-input" placeholder="Enter join code" />
+            <button id="join-code-button">Join Game</button>
+          </div>
+        </div>
+        <div id="right">
+          <h2>Waiting Room</h2>
+          <div id="waiting-room-players"></div>
+          <button id="start-game-button" disabled>Start Game</button>
+          <div id="game-code-display" style="display: none;">
+            <h2>Game Code</h2>
+            <div id="game-code-value" style="font-size: 24px; font-weight: bold;"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="lobby.js"></script>
+  </body>
+</html>

@@ -370,3 +370,51 @@ td:hover {
         transition: none !important;
     }
 }
+
+/* Multiplayer Scores */
+#multiplayer-scores {
+    text-align: center;
+    color: white;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    margin: 20px auto;
+    max-width: 800px;
+}
+
+#multiplayer-scores h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #4caf50;
+}
+
+#final-scores-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#final-scores-table thead {
+    background-color: #4caf50;
+    color: white;
+    font-weight: bold;
+}
+
+#final-scores-table th,
+#final-scores-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #444;
+}
+
+#final-scores-table tbody tr:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+#final-scores-table tbody tr:hover {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+

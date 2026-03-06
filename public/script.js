@@ -1,9 +1,9 @@
-const diceOne = '<img alt="1" src="./images/dice-six-faces-one.png">';
-const diceTwo = '<img alt="2" src="./images/dice-six-faces-two.png">';
-const diceThree = '<img alt="3" src="./images/dice-six-faces-three.png">';
-const diceFour = '<img alt="4" src="./images/dice-six-faces-four.png">';
-const diceFive = '<img alt="5" src="./images/dice-six-faces-five.png">';
-const diceSix = '<img alt="6" src="./images/dice-six-faces-six.png">';
+const diceOne = '<img alt="1" src="images/dice-six-faces-one.png">';
+const diceTwo = '<img alt="2" src="images/dice-six-faces-two.png">';
+const diceThree = '<img alt="3" src="images/dice-six-faces-three.png">';
+const diceFour = '<img alt="4" src="images/dice-six-faces-four.png">';
+const diceFive = '<img alt="5" src="images/dice-six-faces-five.png">';
+const diceSix = '<img alt="6" src="images/dice-six-faces-six.png">';
 
 const diceArray = [diceOne, diceTwo, diceThree, diceFour, diceFive, diceSix];
 
@@ -12,6 +12,12 @@ let totalTurns = 0;
 let yahtzeeBonus = 0;
 let startTime = null;
 let timerInterval = null;
+
+// Multiplayer support
+let ws = null;
+let gameCode = null;
+let isMultiplayer = false;
+let playerScores = {};
 
 function formatElapsed(ms) {
     const totalSeconds = Math.floor(ms / 1000);
@@ -38,6 +44,79 @@ if (stored) {
     gameCount = 1;
 }
 document.getElementById('game-count').textContent = gameCount;
+
+// Check for multiplayer game code
+function initMultiplayer() {
+    const params = new URLSearchParams(window.location.search);
+    gameCode = params.get('gameCode');
+    
+    if (gameCode) {
+        isMultiplayer = true;
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(`${protocol}//${window.location.host}`);
+        
+        ws.onopen = () => {
+            console.log('Connected to game server for multiplayer');
+            const playerName = sessionStorage.getItem('playerName') || 'Player';
+            ws.send(JSON.stringify({ 
+                type: 'joinGame', 
+                gameCode: gameCode,
+                playerName: playerName 
+            }));
+        };
+        
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            handleMultiplayerMessage(message);
+        };
+        
+        ws.onclose = () => {
+            console.log('Disconnected from server');
+        };
+    }
+}
+
+function handleMultiplayerMessage(message) {
+    switch (message.type) {
+        case 'gameJoined':
+            // Game joined successfully, display scores if available
+            if (message.allPlayers) {
+                message.allPlayers.forEach(player => {
+                    if (player.score) {
+                        playerScores[player.name] = player.score;
+                    }
+                });
+            }
+            break;
+        
+        case 'playerScoreUpdate':
+            playerScores[message.playerName] = message.score;
+            // Check if all players have submitted scores
+            const session = gameSessions.get(gameCode);
+            if (message.allPlayers && message.allPlayers.every(p => playerScores[p.name])) {
+                displayFinalScores(playerScores);
+            }
+            break;
+        
+        case 'playerFinished':
+            playerScores[message.playerName] = message.finalScore;
+            break;
+        
+        case 'gameEnded':
+            displayFinalScores(message.scores);
+            break;
+    }
+}
+
+// Initialize multiplayer on page load
+window.addEventListener('load', () => {
+    // Set player name if available
+    const playerName = sessionStorage.getItem('playerName');
+    if (playerName) {
+        document.getElementById('player-name').textContent = playerName;
+    }
+    initMultiplayer();
+});
 
 const newGameButton = document.getElementById('new-game-button');
 newGameButton.addEventListener('click', () => {
@@ -295,16 +374,49 @@ document.querySelectorAll('#upper-table td, #lower-table td').forEach(td => {
                 rollButton.disabled = true
                 const upperTotal = parseInt(upperText) || 0
                 const lowerTotal = parseInt(lowerText) || 0
-                document.getElementById('final-score-value').textContent = upperTotal + lowerTotal
+                const finalScore = upperTotal + lowerTotal
+                document.getElementById('final-score-value').textContent = finalScore
                 document.getElementById('new-game-button').style.display = 'block'
                 if (timerInterval) {
                     clearInterval(timerInterval);
                     timerInterval = null;
                 }
+                
+                // Send score to server if multiplayer
+                if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
+                    const playerName = document.getElementById('player-name').textContent;
+                    ws.send(JSON.stringify({
+                        type: 'updateScore',
+                        gameCode: gameCode,
+                        playerName: playerName,
+                        score: finalScore
+                    }));
+                }
             }
         }
     })
 });
+
+// Display final scores from all players
+function displayFinalScores(scores) {
+    document.getElementById('final-score').style.display = 'none';
+    document.getElementById('multiplayer-scores').style.display = 'block';
+    
+    const tbody = document.getElementById('final-scores-body');
+    tbody.innerHTML = '';
+    
+    const sortedScores = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    sortedScores.forEach(([playerName, score]) => {
+        const row = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        const scoreCell = document.createElement('td');
+        nameCell.textContent = playerName;
+        scoreCell.textContent = score;
+        row.appendChild(nameCell);
+        row.appendChild(scoreCell);
+        tbody.appendChild(row);
+    });
+}
 
 document.querySelectorAll('#total-upper-score, #total-lower-score').forEach(td => {
     td.addEventListener('click', () => {
