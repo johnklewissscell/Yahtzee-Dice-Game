@@ -1,168 +1,67 @@
 <!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Yahtzee Dice Game | Gameplay</title>
-    <link rel="icon" href="images/dice-logo.png">
-    <link rel="stylesheet" href="styles.css">
-</head>
-
-<body>
-    <div id="banner">
-        <img src="images/dice-logo.png" alt="Dice Logo" id="logo">
-        <h1 id="heading">Yahtzee Online</h1>
-        <div id="stats">
-            <div class="separator"></div>
-            <h2>Game Number<span id="game-count"></span></h2>
-            <div class="separator"></div>
-            <h2>Player Name<span id="player-name"></span></h2>
-            <div class="separator"></div>
-            <h2>Time<span id="time-count">0:00</span></h2>
-            <div class="separator"></div>
+    <title>Yahtzee Dice Game | Lobby</title>
+    <link rel="stylesheet" href="/public/lobby.css" />
+  </head>
+  <body>
+    <header>
+      <div id="banner">
+        <div id="game-title">
+          <img src="./images/dice-logo.png" alt="Dice Logo" id="logo" />
+          <h2 id="heading">Yahtzee Online</h2>
         </div>
-    </div>
-    <div id="keeper-dice">
-        <div class="diceOne keepDice dice"></div>
-        <div class="diceTwo keepDice dice"></div>
-        <div class="diceThree keepDice dice"></div>
-        <div class="diceFour keepDice dice"></div>
-        <div class="diceFive keepDice dice"></div>
-    </div>
-    <div id="counter">
-        <h2>Rolls Left</h2>
-        <span id="roll-count">3</span>
-    </div>
-    <div id="mid-section">
-        <div id="playspace">
-            <div id="playOne" class="diceOne playdice dice"></div>
-            <div id="playTwo" class="diceTwo playdice dice"></div>
-            <div id="playThree" class="diceThree playdice dice"></div>
-            <div id="playFour" class="diceFour playdice dice"></div>
-            <div id="playFive" class="diceFive playdice dice"></div>
+        <div class="separator"></div>
+        <div id="player-name">Player Name</div>
+        <div class="separator"></div>
+        <div id="games-played">
+          Games Played: <span id="game-count">0</span>
         </div>
-        <div id="unset-dice">
-            <div class="diceOne dice"><img alt="1" src="images/dice-six-faces-one.png"></div>
-            <div class="diceTwo dice"><img alt="2" src="images/dice-six-faces-two.png"></div>
-            <div class="diceThree dice"><img alt="3" src="images/dice-six-faces-three.png"></div>
-            <div class="diceFour dice"><img alt="4" src="images/dice-six-faces-four.png"></div>
-            <div class="diceFive dice"><img alt="5" src="images/dice-six-faces-five.png"></div>
+      </div>
+    </header>
+    <main>
+      <div id="middle">
+        <div id="left">
+          <div id="enter-name">
+            <h2>Player Name: </h2>
+            <input type="text" id="name-input" placeholder="Enter your name" />
+            <button id="enter-name-button">Enter Name</button>
+          </div>
+          <div id="multiplayer">
+            <div id="oneP" class="mp">1P</div>
+            <div id="twoP" class="mp">2P</div>
+            <div id="threeP" class="mp">3P</div>
+            <div id="fourP" class="mp">4P</div>
+            <div id="fiveP" class="mp">5P</div>
+            <div id="sixP" class="mp">6P</div>
+            <div id="sevenP" class="mp">7P</div>
+            <div id="eightP" class="mp">8P</div>
+          </div>
+          <div id="game-code">
+            <h2>Game Code:</h2>
+            <input type="text" id="game-code-input" placeholder="Create game code (ie: 77AD3B)" />
+            <button id="join-game-button">Create Game</button>
+          </div>
+          <h1 id="or">OR</h1>
+          <div id="join-code">
+            <h2>Join Code:</h2>
+            <input type="text" id="join-code-input" placeholder="Enter join code" />
+            <button id="join-code-button">Join Game</button>
+          </div>
         </div>
-        <div id="roll-btn">
-            <button id="roll-button">Roll Dice</button>
-            <button id="new-game-button" style="display:none; margin-top:8px;">New Game</button>
+        <div id="right">
+          <h2>Waiting Room</h2>
+          <div id="waiting-room-players"></div>
+          <button id="start-game-button" disabled>Start Game</button>
+          <div id="game-code-display" style="display: none;">
+            <h2>Game Code</h2>
+            <div id="game-code-value" style="font-size: 24px; font-weight: bold;"></div>
+          </div>
         </div>
-    </div>
-    <div id="scorecard">
-        <table id="upper-table">
-            <div id="upper-section">
-                <tr>
-                    <th>Category</th>
-                    <th>Score</th>
-                </tr>
-                <tr>
-                    <td>Aces</td>
-                    <td id="aces-score"></td>
-                </tr>
-                <tr>
-                    <td>Twos</td>
-                    <td id="twos-score"></td>
-                </tr>
-                <tr>
-                    <td>Threes</td>
-                    <td id="threes-score"></td>
-                </tr>
-                <tr>
-                    <td>Fours</td>
-                    <td id="fours-score"></td>
-                </tr>
-                <tr>
-                    <td>Fives</td>
-                    <td id="fives-score"></td>
-                </tr>
-                <tr>
-                    <td>Sixers</td>
-                    <td id="sixes-score"></td>
-                </tr>
-                <tr class="deep">
-                    <td>Score</td>
-                    <td id="upper-score"></td>
-                </tr>
-                <tr class="deep">
-                    <td>Bonus</td>
-                    <td id="bonus-score"></td>
-                </tr>
-                <tr class="deep">
-                    <td>Total Upper Score</td>
-                    <td id="total-upper-score"></td>
-                </tr>
-            </div>
-        </table>
-        <table id="lower-table">
-            <div id="lower-section">
-                <th>Category</th>
-                <th>Score</th>
-                <tr>
-                    <td>Three of a Kind</td>
-                    <td id="three-kind-score"></td>
-                </tr>
-                <tr>
-                    <td>Four of a Kind</td>
-                    <td id="four-kind-score"></td>
-                </tr>
-                <tr>
-                    <td>Full House</td>
-                    <td id="full-house-score"></td>
-                </tr>
-                <tr>
-                    <td>Small Straight</td>
-                    <td id="small-straight-score"></td>
-                </tr>
-                <tr>
-                    <td>Large Straight</td>
-                    <td id="large-straight-score"></td>
-                </tr>
-                <tr>
-                    <td>Yahtzee</td>
-                    <td id="yahtzee-score"></td>
-                </tr>
-                <tr>
-                    <td>Chance</td>
-                    <td id="chance-score"></td>
-                </tr>
-                <tr>
-                    <td>Yahtzee Bonus</td>
-                    <td id="yahtzee-bonus-score"></td>
-                </tr>
-                <tr class="deep">
-                    <td>Total Lower Score</td>
-                    <td id="total-lower-score"></td>
-                </tr>
-                </tr>
-            </div>
-        </table>
-    </div>
-    <div id="final-score">
-        <h2>Final Score: <span id="final-score-value"></span></h2>
-    </div>
-    <div id="multiplayer-scores" style="display: none;">
-        <h2>Final Scores</h2>
-        <table id="final-scores-table">
-            <thead>
-                <tr>
-                    <th>Player</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody id="final-scores-body">
-            </tbody>
-        </table>
-    </div>
-    <div id="quit-game">
-        <button id="quit-button" onclick="window.location.href='lobby.html'">Quit Game</button>
-    </div>
-    <script src="script.js"></script>
-</body>
-
+      </div>
+    </main>
+    <script src="/public/lobby.js"></script>
+  </body>
 </html>

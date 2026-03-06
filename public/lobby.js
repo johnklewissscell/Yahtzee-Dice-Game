@@ -50,7 +50,7 @@ function handleServerMessage(message) {
             break;
 
         case 'gameStarted':
-            window.location.href = '/index.html?gameCode=' + currentGameCode;
+            window.location.href = '/play.html?gameCode=' + currentGameCode;
             break;
 
         case 'error':
@@ -213,7 +213,7 @@ document.getElementById('start-game-button').addEventListener('click', () => {
     if (selectedMode === 1) {
         // 1-player: go directly to game
         sessionStorage.setItem('playerName', playerName || 'Player1');
-        window.location.href = '/public/index.html';
+        window.location.href = '/public/play.html';
     } else {
         // Multiplayer: send start request to server
         ws.send(JSON.stringify({ type: 'startGame' }));
