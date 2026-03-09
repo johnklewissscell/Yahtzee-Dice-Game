@@ -1,181 +1,197 @@
 import { db } from "./api.js";
-import { ref, set, get, update, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import {
+  ref,
+  set,
+  get,
+  update,
+  onValue,
+  onDisconnect,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    let playerName = null;
-    let selectedMode = null;
-    let currentGameCode = null;
-    let isHost = false;
+  let playerName = null;
+  let selectedMode = null;
+  let currentGameCode = null;
+  let isHost = false;
 
-    function changePlayerName() {
-        const nameInput = document.getElementById("name-input");
-        const displayName = document.getElementById("player-name");
-        const newName = nameInput.value.trim();
-        if (!newName) return alert("Please enter a valid name.");
-        playerName = newName;
-        displayName.textContent = newName;
-        nameInput.value = "";
-    }
+  function changePlayerName() {
+    const nameInput = document.getElementById("name-input");
+    const displayName = document.getElementById("player-name");
+    const newName = nameInput.value.trim();
+    if (!newName) return alert("Please enter a valid name.");
+    playerName = newName;
+    displayName.textContent = newName;
+    nameInput.value = "";
+  }
 
-    function generateGameCode() {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        let code = "";
-        for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-        currentGameCode = code;
+  function generateGameCode() {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 6; i++)
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    currentGameCode = code;
 
-        document.getElementById("game-code-input").value = code;
-        document.getElementById("game-code-display").style.display = "block";
-        document.getElementById("game-code-value").textContent = code;
+    document.getElementById("game-code-input").value = code;
+    document.getElementById("game-code-display").style.display = "block";
+    document.getElementById("game-code-value").textContent = code;
 
-        const gameRef = ref(db, "games/" + currentGameCode);
-        set(gameRef, {
-            host: playerName || "Player1",
-            status: "waiting",
-            maxPlayers: selectedMode || 1,
-            players: { [playerName || "Player1"]: { name: playerName || "Player1" } }
-        });
-
-        onDisconnect(gameRef).remove();
-
-        isHost = true;
-
-        listenForPlayers(currentGameCode);
-        listenForGameStatus(currentGameCode);
-    }
-
-    function quitGame() {
-    if (!currentGameCode) return window.location.href = "index.html";
-
-    if (isHost) {
-        const gameRef = ref(db, "games/" + currentGameCode);
-        set(gameRef, null);
-    } else {
-        const playerRef = ref(db, `games/${currentGameCode}/players/${playerName}`);
-        set(playerRef, null);
-    }
-
-    window.location.href = "index.html";
-}
-
-    function updateWaitingRoom(players) {
-        const waitingRoom = document.getElementById("waiting-room-players");
-        waitingRoom.innerHTML = "";
-        players.forEach(p => {
-            const div = document.createElement("div");
-            div.className = "waiting-player";
-            div.textContent = p.name;
-            waitingRoom.appendChild(div);
-        });
-        if (isHost) {
-            const maxPlayers = selectedMode || 1;
-            updateStartButtonState(players.length === maxPlayers);
-        }
-    }
-
-    function updateStartButtonState(canStart) {
-        const startBtn = document.getElementById("start-game-button");
-        startBtn.disabled = !canStart;
-        startBtn.style.opacity = canStart ? "1" : "0.5";
-        startBtn.style.cursor = canStart ? "pointer" : "not-allowed";
-    }
-
-    const mpDivs = document.querySelectorAll(".mp");
-    mpDivs.forEach(div => {
-        div.addEventListener("click", () => {
-            mpDivs.forEach(d => d.classList.remove("selected"));
-            div.classList.add("selected");
-            selectedMode = parseInt(div.textContent);
-            const gameCodeDiv = document.getElementById("game-code");
-            const joinCodeDiv = document.getElementById("join-code");
-            const orDiv = document.getElementById("or");
-            if (div.id === "oneP") {
-                gameCodeDiv.style.display = "none";
-                joinCodeDiv.style.display = "none";
-                orDiv.style.display = "none";
-                updateStartButtonState(true);
-            } else {
-                gameCodeDiv.style.display = "flex";
-                joinCodeDiv.style.display = "flex";
-                orDiv.style.display = "block";
-                updateStartButtonState(false);
-            }
-        });
-    });
-
-    document.getElementById("enter-name-button")?.addEventListener("click", changePlayerName);
-    document.getElementById("name-input")?.addEventListener("keypress", e => { if (e.key === "Enter") changePlayerName(); });
-    document.getElementById("generate-code")?.addEventListener("click", () => { if (!playerName) return alert("Enter a name first"); generateGameCode(); });
-
-    document.getElementById("join-code-button")?.addEventListener("click", async () => {
-        const joinCode = document.getElementById("join-code-input").value.trim().toUpperCase();
-        if (!playerName) return alert("Enter a name first");
-        if (!joinCode) return alert("Enter a game code");
-
-        const gameRef = ref(db, "games/" + joinCode);
-        const snapshot = await get(gameRef);
-
-        if (!snapshot.exists()) return alert("Game not found");
-
-        const gameData = snapshot.val();
-
-        if (gameData.status === "started") return alert("Game has already started");
-
-        if (Object.keys(gameData.players || {}).length >= gameData.maxPlayers) return alert("Lobby is full");
-
-        currentGameCode = joinCode;
-        isHost = false;
-
-        const playerRef = ref(db, `games/${joinCode}/players/${playerName}`);
-        await set(playerRef, { name: playerName });
-        onDisconnect(playerRef).remove();
-
-        listenForPlayers(joinCode);
-        listenForGameStatus(joinCode);
-
-        document.getElementById("game-code-display").style.display = "block";
-        document.getElementById("game-code-value").textContent = currentGameCode;
-
-        updateStartButtonState(false);
-    });
-
-    document.getElementById("start-game-button")?.addEventListener("click", async () => {
-    if (!isHost) return;
     const gameRef = ref(db, "games/" + currentGameCode);
-    await update(gameRef, { status: "started" });
-});
 
-    document.getElementById("quit-game-button")?.addEventListener("click", quitGame);
-    window.addEventListener("beforeunload", () => {
-    if (!isHost && currentGameCode) {
-        const playerRef = ref(db, `games/${currentGameCode}/players/${playerName}`);
-        set(playerRef, null);
-    }
-});
-
-    function listenForPlayers(code) {
-        const playersRef = ref(db, "games/" + code + "/players");
-        onValue(playersRef, snapshot => {
-            const data = snapshot.val();
-            if (!data) return;
-            const players = Object.values(data);
-            updateWaitingRoom(players);
-        });
-    }
-
-    function listenForGameStatus(code) {
-    const gameRef = ref(db, "games/" + code);
-    onValue(gameRef, snapshot => {
-        if (!snapshot.exists()) {
-            window.location.href = "index.html";
-            return;
-        }
-        const gameData = snapshot.val();
-
-        if (gameData.status === "started") {
-            sessionStorage.setItem("playerName", playerName || "Player1");
-            sessionStorage.setItem("gameCode", currentGameCode || "");
-            window.location.href = "play.html";
-        }
+    set(gameRef, {
+      host: playerName || "Player1",
+      status: "waiting",
+      maxPlayers: selectedMode || 1,
+      players: { [playerName || "Player1"]: { name: playerName || "Player1" } },
     });
-}
+
+    const playerRef = ref(db, `games/${currentGameCode}/players/${playerName}`);
+    onDisconnect(playerRef).remove();
+
+    isHost = true;
+
+    listenForPlayers(currentGameCode);
+    listenForGameStatus(currentGameCode);
+  }
+
+  function updateWaitingRoom(players) {
+    const waitingRoom = document.getElementById("waiting-room-players");
+    waitingRoom.innerHTML = "";
+    players.forEach((p) => {
+      const div = document.createElement("div");
+      div.className = "waiting-player";
+      div.textContent = p.name;
+      waitingRoom.appendChild(div);
+    });
+    if (isHost) {
+      const maxPlayers = selectedMode || 1;
+      updateStartButtonState(players.length === maxPlayers);
+    }
+  }
+
+  function updateStartButtonState(canStart) {
+    const startBtn = document.getElementById("start-game-button");
+    startBtn.disabled = !canStart;
+    startBtn.style.opacity = canStart ? "1" : "0.5";
+    startBtn.style.cursor = canStart ? "pointer" : "not-allowed";
+  }
+
+  const mpDivs = document.querySelectorAll(".mp");
+  mpDivs.forEach((div) => {
+    div.addEventListener("click", () => {
+      mpDivs.forEach((d) => d.classList.remove("selected"));
+      div.classList.add("selected");
+      selectedMode = parseInt(div.textContent);
+      const gameCodeDiv = document.getElementById("game-code");
+      const joinCodeDiv = document.getElementById("join-code");
+      const orDiv = document.getElementById("or");
+      if (div.id === "oneP") {
+        gameCodeDiv.style.display = "none";
+        joinCodeDiv.style.display = "none";
+        orDiv.style.display = "none";
+        updateStartButtonState(true);
+      } else {
+        gameCodeDiv.style.display = "flex";
+        joinCodeDiv.style.display = "flex";
+        orDiv.style.display = "block";
+        updateStartButtonState(false);
+      }
+    });
+  });
+
+  document
+    .getElementById("enter-name-button")
+    ?.addEventListener("click", changePlayerName);
+  document.getElementById("name-input")?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") changePlayerName();
+  });
+  document.getElementById("generate-code")?.addEventListener("click", () => {
+    if (!playerName) return alert("Enter a name first");
+    generateGameCode();
+  });
+
+  document
+    .getElementById("join-code-button")
+    ?.addEventListener("click", async () => {
+      const joinCode = document
+        .getElementById("join-code-input")
+        .value.trim()
+        .toUpperCase();
+      if (!playerName) return alert("Enter a name first");
+      if (!joinCode) return alert("Enter a game code");
+
+      const gameRef = ref(db, "games/" + joinCode);
+      const snapshot = await get(gameRef);
+
+      if (!snapshot.exists()) return alert("Game not found");
+
+      const gameData = snapshot.val();
+
+      if (gameData.status === "started")
+        return alert("Game has already started");
+
+      if (Object.keys(gameData.players || {}).length >= gameData.maxPlayers)
+        return alert("Lobby is full");
+
+      currentGameCode = joinCode;
+      isHost = false;
+
+      const playerRef = ref(db, `games/${joinCode}/players/${playerName}`);
+      await set(playerRef, { name: playerName });
+      onDisconnect(playerRef).remove();
+
+      listenForPlayers(joinCode);
+      listenForGameStatus(joinCode);
+
+      document.getElementById("game-code-display").style.display = "block";
+      document.getElementById("game-code-value").textContent = currentGameCode;
+
+      updateStartButtonState(false);
+    });
+
+  document
+  .getElementById("start-game-button")
+  ?.addEventListener("click", async () => {
+
+    sessionStorage.setItem("playerName", playerName);
+    sessionStorage.setItem("gameCode", currentGameCode);
+    sessionStorage.setItem("isHost", isHost ? "true" : "false");
+
+    const gameRef = ref(db, "games/" + currentGameCode);
+
+    await update(gameRef, {
+      status: "started",
+    });
+});
+
+  function listenForPlayers(code) {
+    const playersRef = ref(db, "games/" + code + "/players");
+    onValue(playersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+      const players = Object.values(data);
+      updateWaitingRoom(players);
+    });
+  }
+
+  function listenForGameStatus(code) {
+    const gameRef = ref(db, "games/" + code);
+    onValue(gameRef, (snapshot) => {
+      if (!snapshot.exists()) {
+        window.location.href = "index.html";
+        return;
+      }
+      const gameData = snapshot.val();
+
+      if (gameData.status === "started") {
+        sessionStorage.setItem("playerName", playerName || "Player1");
+        sessionStorage.setItem("gameCode", currentGameCode || "");
+        window.location.href = "play.html";
+      }
+
+      if (gameData.status === "finished") {
+        set(ref(db, "games/" + code), null);
+        window.location.href = "index.html";
+      }
+    });
+  }
 });

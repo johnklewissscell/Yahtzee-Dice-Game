@@ -1,13 +1,10 @@
 import { db } from "./api.js";
-import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-const gameCode = sessionStorage.getItem("gameCode");
-if (gameCode) {
-    const gameRef = ref(db, "games/" + gameCode);
-    onValue(gameRef, (snapshot) => {
-        if (!snapshot.exists()) window.location.href = "index.html";
-    });
-}
+import {
+  ref,
+  set,
+  get,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const diceOne = '<img alt="1" src="images/dice-six-faces-one.png">';
 const diceTwo = '<img alt="2" src="images/dice-six-faces-two.png">';
@@ -15,6 +12,7 @@ const diceThree = '<img alt="3" src="images/dice-six-faces-three.png">';
 const diceFour = '<img alt="4" src="images/dice-six-faces-four.png">';
 const diceFive = '<img alt="5" src="images/dice-six-faces-five.png">';
 const diceSix = '<img alt="6" src="images/dice-six-faces-six.png">';
+
 const diceArray = [diceOne, diceTwo, diceThree, diceFour, diceFive, diceSix];
 
 const rollButton = document.getElementById("roll-button");
@@ -24,6 +22,7 @@ let startTime = null;
 let timerInterval = null;
 
 let ws = null;
+let gameCode = null;
 let isMultiplayer = false;
 let playerScores = {};
 
@@ -55,28 +54,53 @@ document.getElementById("game-count").textContent = gameCount;
 
 function initMultiplayer() {
   const params = new URLSearchParams(window.location.search);
-  const paramCode = params.get("gameCode");
-  if (paramCode) {
+  gameCode = params.get("gameCode");
+
+  if (gameCode) {
     isMultiplayer = true;
-    ws = new WebSocket((window.location.protocol === "https:" ? "wss:" : "ws:") + "//" + window.location.host);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(`${protocol}//${window.location.host}`);
+
     ws.onopen = () => {
       const playerName = sessionStorage.getItem("playerName") || "Player";
-      ws.send(JSON.stringify({ type: "joinGame", gameCode: paramCode, playerName }));
+      ws.send(
+        JSON.stringify({
+          type: "joinGame",
+          gameCode: gameCode,
+          playerName: playerName,
+        }),
+      );
     };
-    ws.onmessage = (event) => handleMultiplayerMessage(JSON.parse(event.data));
-    ws.onclose = () => window.location.href = "index.html";
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      handleMultiplayerMessage(message);
+    };
+
+    ws.onclose = () => {
+      window.location.href = "index.html";
+    };
   }
 }
 
 function handleMultiplayerMessage(message) {
   switch (message.type) {
     case "gameJoined":
-      if (message.allPlayers) message.allPlayers.forEach(p => { if (p.score) playerScores[p.name] = p.score; });
+      if (message.allPlayers) {
+        message.allPlayers.forEach((player) => {
+          if (player.score) playerScores[player.name] = player.score;
+        });
+      }
       break;
     case "playerScoreUpdate":
       playerScores[message.playerName] = message.score;
       const session = gameSessions.get(gameCode);
-      if (message.allPlayers && message.allPlayers.every(p => playerScores[p.name])) displayFinalScores(playerScores);
+      if (
+        message.allPlayers &&
+        message.allPlayers.every((p) => playerScores[p.name])
+      ) {
+        displayFinalScores(playerScores);
+      }
       break;
     case "playerFinished":
       playerScores[message.playerName] = message.finalScore;
@@ -92,7 +116,21 @@ function handleMultiplayerMessage(message) {
 
 window.addEventListener("load", () => {
   const playerName = sessionStorage.getItem("playerName");
-  if (playerName) document.getElementById("player-name").textContent = playerName;
+  if (playerName) {
+    document.getElementById("player-name").textContent = playerName;
+  }
+
+  const gameCode = sessionStorage.getItem("gameCode");
+  if (gameCode) {
+    const gameRef = ref(db, "games/" + gameCode);
+
+    onValue(gameRef, (snapshot) => {
+      if (!snapshot.exists()) {
+        window.location.href = "index.html";
+      }
+    });
+  }
+
   initMultiplayer();
 });
 
@@ -113,7 +151,9 @@ rollButton.addEventListener("click", () => {
   ];
 
   const activeDice = playDice.filter((die) => die.style.display !== "none");
-  const keeperDice = Array.from(document.querySelectorAll(".keepDice")).filter((d) => d.innerHTML.trim());
+  const keeperDice = Array.from(document.querySelectorAll(".keepDice")).filter(
+    (d) => d.innerHTML.trim(),
+  );
 
   if (activeDice.length === 0 && keeperDice.length === 5) {
     alert("move dice into playspace to roll them again");
@@ -150,7 +190,10 @@ function randomizeDicePositions() {
     if (!die.innerHTML.trim() || die.style.display === "none") return;
     const dieWidth = die.offsetWidth;
     const dieHeight = die.offsetHeight;
-    let x, y, safe = false, attempts = 0;
+    let x,
+      y,
+      safe = false,
+      attempts = 0;
     while (!safe && attempts < 100) {
       x = Math.random() * (spaceWidth - dieWidth);
       y = Math.random() * (spaceHeight - dieHeight);
@@ -196,7 +239,9 @@ document.querySelectorAll(".keepDice").forEach((keeperDie) => {
   keeperDie.style.cursor = "default";
   keeperDie.addEventListener("click", () => {
     if (!keeperDie.innerHTML.trim()) return;
-    const diceClass = [...keeperDie.classList].find((cls) => cls.startsWith("dice"));
+    const diceClass = [...keeperDie.classList].find((cls) =>
+      cls.startsWith("dice"),
+    );
     const playSlot = document.querySelector("#playspace ." + diceClass);
     playSlot.innerHTML = keeperDie.innerHTML;
     playSlot.style.display = "block";
@@ -214,7 +259,9 @@ function updateKeeperCursor() {
 
 function calculatePotentialScores() {
   const allDice = Array.from(document.querySelectorAll(".playdice, .keepDice"))
-    .map((die) => die.innerHTML.trim() ? parseInt(die.querySelector("img").alt) : null)
+    .map((die) =>
+      die.innerHTML.trim() ? parseInt(die.querySelector("img").alt) : null,
+    )
     .filter(Boolean);
 
   const upperMapping = ["aces", "twos", "threes", "fours", "fives", "sixes"];
@@ -226,7 +273,9 @@ function calculatePotentialScores() {
     td.style.color = count ? "red" : "";
   });
 
-  const upperCells = upperMapping.map((id) => document.getElementById(`${id}-score`));
+  const upperCells = upperMapping.map((id) =>
+    document.getElementById(`${id}-score`),
+  );
   const allUpperLocked = upperCells.every((td) => td.dataset.locked === "true");
   if (allUpperLocked) {
     const upperScores = upperCells.map((td) => parseInt(td.textContent) || 0);
@@ -234,7 +283,8 @@ function calculatePotentialScores() {
     document.getElementById("upper-score").textContent = upperTotal;
     const bonus = upperTotal >= 63 ? 35 : 0;
     document.getElementById("bonus-score").textContent = bonus;
-    document.getElementById("total-upper-score").textContent = upperTotal + bonus;
+    document.getElementById("total-upper-score").textContent =
+      upperTotal + bonus;
   } else {
     document.getElementById("upper-score").textContent = "";
     document.getElementById("bonus-score").textContent = "";
@@ -247,8 +297,10 @@ function calculatePotentialScores() {
     "full-house-score": isFullHouse(allDice) ? 25 : "",
     "small-straight-score": hasSmallStraight(allDice) ? 30 : "",
     "large-straight-score": hasLargeStraight(allDice) ? 40 : "",
-    "yahtzee-score": allDice.length === 5 && new Set(allDice).size === 1 ? 50 : "",
-    "chance-score": allDice.length > 0 ? allDice.reduce((a, b) => a + b, 0) : "",
+    "yahtzee-score":
+      allDice.length === 5 && new Set(allDice).size === 1 ? 50 : "",
+    "chance-score":
+      allDice.length > 0 ? allDice.reduce((a, b) => a + b, 0) : "",
   };
 
   Object.keys(lowerScores).forEach((id) => {
@@ -262,21 +314,39 @@ function calculatePotentialScores() {
   const yahtzeeScoreLocked = yahtzeeTd.dataset.locked === "true";
   const yahtzeeScoreValue = parseInt(yahtzeeTd.textContent) || 0;
   if (yahtzeeScoreLocked && yahtzeeScoreValue === 0) yahtzeeBonus = 0;
-  if (yahtzeeScoreLocked && yahtzeeScoreValue === 50 && allDice.length === 5 && new Set(allDice).size === 1) {
+  if (
+    yahtzeeScoreLocked &&
+    yahtzeeScoreValue === 50 &&
+    allDice.length === 5 &&
+    new Set(allDice).size === 1
+  ) {
     yahtzeeBonus += 100;
   }
   let yahtzeeBonusDisplay = "";
   if (yahtzeeScoreLocked && yahtzeeScoreValue === 0) yahtzeeBonusDisplay = "0";
   else if (yahtzeeBonus > 0) yahtzeeBonusDisplay = yahtzeeBonus;
-  document.getElementById("yahtzee-bonus-score").textContent = yahtzeeBonusDisplay;
+  document.getElementById("yahtzee-bonus-score").textContent =
+    yahtzeeBonusDisplay;
 
-  const lowerScoreCells = ["three-kind-score","four-kind-score","full-house-score","small-straight-score","large-straight-score","yahtzee-score","chance-score"];
-  const allLowerLocked = lowerScoreCells.every((id) => document.getElementById(id).dataset.locked === "true");
-  const lowerTotalValue = lowerScoreCells.reduce((sum, id) => {
-    const td = document.getElementById(id);
-    const val = td.dataset.locked === "true" ? parseInt(td.textContent) || 0 : 0;
-    return sum + val;
-  }, 0) + yahtzeeBonus;
+  const lowerScoreCells = [
+    "three-kind-score",
+    "four-kind-score",
+    "full-house-score",
+    "small-straight-score",
+    "large-straight-score",
+    "yahtzee-score",
+    "chance-score",
+  ];
+  const allLowerLocked = lowerScoreCells.every(
+    (id) => document.getElementById(id).dataset.locked === "true",
+  );
+  const lowerTotalValue =
+    lowerScoreCells.reduce((sum, id) => {
+      const td = document.getElementById(id);
+      const val =
+        td.dataset.locked === "true" ? parseInt(td.textContent) || 0 : 0;
+      return sum + val;
+    }, 0) + yahtzeeBonus;
   const lowerTotalDisplay = allLowerLocked ? lowerTotalValue : "";
   document.getElementById("total-lower-score").textContent = lowerTotalDisplay;
 }
@@ -302,8 +372,14 @@ function isFullHouse(dice) {
 function hasSmallStraight(dice) {
   if (dice.length < 4) return false;
   const unique = [...new Set(dice)].sort((a, b) => a - b);
-  const straights = [[1, 2, 3, 4],[2, 3, 4, 5],[3, 4, 5, 6]];
-  return straights.some((straight) => straight.every((num) => unique.includes(num)));
+  const straights = [
+    [1, 2, 3, 4],
+    [2, 3, 4, 5],
+    [3, 4, 5, 6],
+  ];
+  return straights.some((straight) =>
+    straight.every((num) => unique.includes(num)),
+  );
 }
 
 function hasLargeStraight(dice) {
@@ -313,7 +389,13 @@ function hasLargeStraight(dice) {
 }
 
 document.querySelectorAll("#upper-table td, #lower-table td").forEach((td) => {
-  const skipIds = ["total-upper-score","total-lower-score","bonus-score","upper-score","yahtzee-bonus-score"];
+  const skipIds = [
+    "total-upper-score",
+    "total-lower-score",
+    "bonus-score",
+    "upper-score",
+    "yahtzee-bonus-score",
+  ];
   if (skipIds.includes(td.id)) return;
   td.addEventListener("click", () => {
     if (td.dataset.locked) return;
@@ -335,8 +417,10 @@ document.querySelectorAll("#upper-table td, #lower-table td").forEach((td) => {
     totalTurns++;
     calculatePotentialScores();
     if (totalTurns >= 13) {
-      const upperText = document.getElementById("total-upper-score").textContent;
-      const lowerText = document.getElementById("total-lower-score").textContent;
+      const upperText =
+        document.getElementById("total-upper-score").textContent;
+      const lowerText =
+        document.getElementById("total-lower-score").textContent;
       if (upperText !== "" && lowerText !== "") {
         rollButton.disabled = true;
         const upperTotal = parseInt(upperText) || 0;
@@ -351,7 +435,14 @@ document.querySelectorAll("#upper-table td, #lower-table td").forEach((td) => {
 
         if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
           const playerName = document.getElementById("player-name").textContent;
-          ws.send(JSON.stringify({ type: "updateScore", gameCode: gameCode, playerName: playerName, score: finalScore }));
+          ws.send(
+            JSON.stringify({
+              type: "updateScore",
+              gameCode: gameCode,
+              playerName: playerName,
+              score: finalScore,
+            }),
+          );
         }
       }
     }
@@ -378,14 +469,41 @@ function displayFinalScores(scores) {
   });
 }
 
-document.querySelectorAll("#total-upper-score, #total-lower-score").forEach((td) => {
-  td.addEventListener("click", () => {
-    alert("You cannot zero out the total scores");
+document
+  .querySelectorAll("#total-upper-score, #total-lower-score")
+  .forEach((td) => {
+    td.addEventListener("click", () => {
+      alert("You cannot zero out the total scores");
+    });
   });
-});
 
 const bonusTd = document.getElementById("bonus-score");
-if (bonusTd) bonusTd.addEventListener("click", () => { alert("You cannot zero out the bonus score"); });
+if (bonusTd)
+  bonusTd.addEventListener("click", () => {
+    alert("You cannot zero out the bonus score");
+  });
 
 const upperTotalTd = document.getElementById("upper-score");
-if (upperTotalTd) upperTotalTd.addEventListener("click", () => { alert("You cannot zero out the upper section score"); });
+if (upperTotalTd)
+  upperTotalTd.addEventListener("click", () => {
+    alert("You cannot zero out the upper section score");
+  });
+
+const quitButton = document.getElementById("quit-button");
+
+quitButton?.addEventListener("click", async () => {
+  const gameCode = sessionStorage.getItem("gameCode");
+  const isHost = sessionStorage.getItem("isHost") === "true";
+
+  if (!gameCode) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  if (isHost) {
+    const gameRef = ref(db, "games/" + gameCode);
+    await set(gameRef, null);
+  }
+
+  window.location.href = "index.html";
+});
