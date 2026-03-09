@@ -156,6 +156,11 @@ document.addEventListener("DOMContentLoaded", () => {
     sessionStorage.setItem("gameCode", currentGameCode);
     sessionStorage.setItem("isHost", isHost ? "true" : "false");
 
+    if (selectedMode === 1) {
+      window.location.href = "play.html";
+      return;
+    }
+
     const gameRef = ref(db, "games/" + currentGameCode);
 
     await update(gameRef, {
