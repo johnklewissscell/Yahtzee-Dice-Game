@@ -149,24 +149,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   document
-  .getElementById("start-game-button")
-  ?.addEventListener("click", async () => {
+    .getElementById("start-game-button")
+    ?.addEventListener("click", async () => {
+      sessionStorage.setItem("playerName", playerName);
+      sessionStorage.setItem("gameCode", currentGameCode);
+      sessionStorage.setItem("isHost", isHost ? "true" : "false");
 
-    sessionStorage.setItem("playerName", playerName);
-    sessionStorage.setItem("gameCode", currentGameCode);
-    sessionStorage.setItem("isHost", isHost ? "true" : "false");
+      if (selectedMode === 1) {
+        window.location.href = "play.html";
+        return;
+      }
 
-    if (selectedMode === 1) {
-      window.location.href = "play.html";
-      return;
-    }
+      const gameRef = ref(db, "games/" + currentGameCode);
 
-    const gameRef = ref(db, "games/" + currentGameCode);
-
-    await update(gameRef, {
-      status: "started",
+      await update(gameRef, {
+        status: "started",
+      });
     });
-});
 
   function listenForPlayers(code) {
     const playersRef = ref(db, "games/" + code + "/players");

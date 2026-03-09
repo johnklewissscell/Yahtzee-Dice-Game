@@ -244,3 +244,114 @@ main {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media only screen and (max-width: 600px) {
+  #banner {
+    flex-direction: column;
+    height: auto;
+    padding: 10px;
+    margin: 10px;
+  }
+
+  #game-title {
+    gap: 10px;
+  }
+
+  #logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  #game-title h2 {
+    font-size: 16px !important;
+  }
+
+  #middle {
+    flex-direction: column;
+    gap: 10px;
+    width: 95%;
+  }
+
+  #left,
+  #right {
+    width: 100%;
+    margin: 0;
+  }
+
+  #or {
+    margin-left: 0;
+    font-size: 28px;
+  }
+
+  #start-game-button {
+    position: relative;
+    width: 100%;
+    bottom: auto;
+    left: auto;
+  }
+
+  #enter-name,
+  #game-code,
+  #join-code {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  #multiplayer {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-left: 0;
+  }
+
+  #right {
+    max-width: 100%;
+    margin-right: 0;
+  }
+}
+
+@media only screen and (min-width: 601px) and (max-width: 1024px) {
+  #middle {
+    flex-direction: column;
+    gap: 15px;
+    width: 90%;
+  }
+
+  #left,
+  #right {
+    width: 100%;
+    margin: 0;
+  }
+
+  #or {
+    margin-left: 0;
+    font-size: 30px;
+  }
+
+  #start-game-button {
+    width: 100%;
+    position: relative;
+    bottom: auto;
+    left: auto;
+  }
+
+  #enter-name,
+  #game-code,
+  #join-code {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  #multiplayer {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-left: 0;
+  }
+
+  #right {
+    max-width: 100%;
+    margin-right: 0;
+  }
+}
