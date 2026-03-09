@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const displayName = document.getElementById("player-name");
     const newName = nameInput.value.trim();
     if (!newName) return alert("Please enter a valid name.");
+    if (newName.length > 15) return alert("Name must be 15 characters or less.");
     playerName = newName;
     displayName.textContent = newName;
     nameInput.value = "";
@@ -181,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const gameRef = ref(db, "games/" + code);
     onValue(gameRef, (snapshot) => {
       if (!snapshot.exists()) {
-        window.location.href = "index.html";
+        window.location.href = "lobby.html";
         return;
       }
       const gameData = snapshot.val();
@@ -194,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (gameData.status === "finished") {
         set(ref(db, "games/" + code), null);
-        window.location.href = "index.html";
+        window.location.href = "lobby.html";
       }
     });
   }

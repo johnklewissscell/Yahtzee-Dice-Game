@@ -16,6 +16,10 @@ const diceSix = '<img alt="6" src="images/dice-six-faces-six.png">';
 const diceArray = [diceOne, diceTwo, diceThree, diceFour, diceFive, diceSix];
 
 const rollButton = document.getElementById("roll-button");
+let finishedPlayers = {};
+let acknowledgedPlayers = {};
+let isHost = sessionStorage.getItem("isHost") === "true";
+let totalPlayers = 0;
 let totalTurns = 0;
 let yahtzeeBonus = 0;
 let startTime = null;
@@ -78,18 +82,31 @@ function initMultiplayer() {
     };
 
     ws.onclose = () => {
-      window.location.href = "index.html";
+      window.location.href = "lobby.html";
     };
   }
 }
 
 function handleMultiplayerMessage(message) {
   switch (message.type) {
+    case "startNewGame":
+      sessionStorage.setItem("nextGameCount", message.nextGameCount);
+      location.reload();
+      break;
     case "gameJoined":
       if (message.allPlayers) {
         message.allPlayers.forEach((player) => {
           if (player.score) playerScores[player.name] = player.score;
         });
+      }
+      break;
+    case "playerAcknowledged":
+      acknowledgedPlayers[message.playerName] = true;
+
+      if (Object.keys(acknowledgedPlayers).length === totalPlayers) {
+        if (isHost) {
+          newGameButton.disabled = false;
+        }
       }
       break;
     case "playerScoreUpdate":
@@ -103,13 +120,21 @@ function handleMultiplayerMessage(message) {
       }
       break;
     case "playerFinished":
-      playerScores[message.playerName] = message.finalScore;
+      finishedPlayers[message.playerName] = message.finalScore;
+
+      if (message.allPlayers) {
+        totalPlayers = message.allPlayers.length;
+      }
+
+      if (Object.keys(finishedPlayers).length === totalPlayers) {
+        displayFinalScores(finishedPlayers);
+      }
       break;
     case "gameEnded":
       displayFinalScores(message.scores);
       break;
     case "hostQuit":
-      window.location.href = "index.html";
+      window.location.href = "lobby.html";
       break;
   }
 }
@@ -126,7 +151,7 @@ window.addEventListener("load", () => {
 
     onValue(gameRef, (snapshot) => {
       if (!snapshot.exists()) {
-        window.location.href = "index.html";
+        window.location.href = "lobby.html";
       }
     });
   }
@@ -135,10 +160,25 @@ window.addEventListener("load", () => {
 });
 
 const newGameButton = document.getElementById("new-game-button");
+if (isMultiplayer && isHost) {
+  newGameButton.disabled = true;
+}
+
 newGameButton.addEventListener("click", () => {
   const next = gameCount + 1;
-  sessionStorage.setItem("nextGameCount", next);
-  location.reload();
+
+  if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(
+      JSON.stringify({
+        type: "startNewGame",
+        gameCode: gameCode,
+        nextGameCount: next,
+      }),
+    );
+  } else {
+    sessionStorage.setItem("nextGameCount", next);
+    location.reload();
+  }
 });
 
 rollButton.addEventListener("click", () => {
@@ -435,12 +475,27 @@ document.querySelectorAll("#upper-table td, #lower-table td").forEach((td) => {
 
         if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
           const playerName = document.getElementById("player-name").textContent;
+
+          if (isMultiplayer && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({
+                type: "acknowledgeResults",
+                gameCode: gameCode,
+                playerName: playerName,
+              }),
+            );
+          }
+
+          if (isHost) {
+            newGameButton.disabled = true;
+          }
+
           ws.send(
             JSON.stringify({
-              type: "updateScore",
+              type: "playerFinished",
               gameCode: gameCode,
               playerName: playerName,
-              score: finalScore,
+              finalScore: finalScore,
             }),
           );
         }
@@ -496,7 +551,7 @@ quitButton?.addEventListener("click", async () => {
   const isHost = sessionStorage.getItem("isHost") === "true";
 
   if (!gameCode) {
-    window.location.href = "index.html";
+    window.location.href = "lobby.html";
     return;
   }
 
@@ -505,5 +560,5 @@ quitButton?.addEventListener("click", async () => {
     await set(gameRef, null);
   }
 
-  window.location.href = "index.html";
+  window.location.href = "lobby.html";
 });
