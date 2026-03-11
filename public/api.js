@@ -1,9 +1,7 @@
-// api.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
 
 const firebaseConfig = {
   apiKey: "AIzaSyB2c3iRRqzuGfReQ84sDQGwjrn2QumefNE",
@@ -17,9 +15,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+
+const rtdb = getDatabase(app);     // realtime database
+const db = getFirestore(app);      // firestore
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const dbd = getFirestore(app);
 
-export { db, auth, provider, dbd };
+export { rtdb, db, auth, provider };

@@ -10,7 +10,9 @@ document.querySelector("button[type='submit']").addEventListener("click", (e) =>
 
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
-      alert(`Logged in as ${userCredential.user.email}`);
+      const user = userCredential.user;
+      const defaultName = user.displayName || user.email.split("@")[0];
+      sessionStorage.setItem("defaultPlayerName", defaultName);
       window.location.href = "lobby.html";
     })
     .catch((error) => {
@@ -22,8 +24,9 @@ document.querySelector(".google-btn").addEventListener("click", () => {
   signInWithPopup(auth, provider)
     .then((result) => {
       const user = result.user;
-      alert(`Logged in as ${user.displayName}`);
-      window.location.href = "lobby.html"; // redirect to game/lobby
+      const defaultName = user.displayName || user.email.split("@")[0];
+      sessionStorage.setItem("defaultPlayerName", defaultName);
+      window.location.href = "lobby.html";
     })
     .catch((error) => {
       console.error(error);

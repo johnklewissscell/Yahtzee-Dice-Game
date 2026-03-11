@@ -162,6 +162,16 @@
     <div id="quit-game">
         <button id="quit-button" onclick="window.location.href='index.html'">Quit Game</button>
     </div>
+<div id="waiting-overlay" style="display: none;">
+    <div id="waiting-box">
+        <h2>Waiting for all players<span id="waiting-dots"></span></h2>
+        <p>The leaderboard will be revealed shortly.</p>
+    </div>
+</div>
+
+<div id="return-lobby" style="display:none;">
+    <button onclick="window.location.href='lobby.html'">Return to Lobby</button>
+</div>
     <script type="module" src="script.js"></script>
 </body>
 
